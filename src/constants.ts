@@ -1,0 +1,1 @@
+export const BLASTHACK_BASE_URL = 'https://www.blast.hk';

@@ -1,0 +1,34 @@
+{
+  "name": "blastify",
+  "version": "1.0.0",
+  "description": "ES6 Promise based API wrapper for blast.hk (or blasthack.net)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "pnpm test && tsc",
+    "test": "echo This package hasn\\'t tests",
+    "docs": "typedoc --out docs src/index.ts --gitRevision master"
+  },
+  "keywords": [],
+  "author": "neverlane",
+  "license": "MIT",
+  "homepage": "https://github.com/neverlane/blastify",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neverlane/blastify.git"
+  },
+  "dependencies": {
+    "axios": "^1.1.3",
+    "happy-dom": "^7.6.7",
+    "tough-cookie": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "@types/tough-cookie": "^4.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.42.1",
+    "@typescript-eslint/parser": "^5.42.1",
+    "eslint": "^8.27.0",
+    "typedoc": "^0.23.20",
+    "typescript": "^4.8.4"
+  }
+}
