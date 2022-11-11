@@ -1,5 +1,6 @@
-node_modules
-.temp
+node_modules/
+.temp/
+dist/
 
 package-lock.json
 yarn.lock
