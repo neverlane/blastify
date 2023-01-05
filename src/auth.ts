@@ -2,7 +2,7 @@ import { Session } from './session';
 
 export type TwoFactorProvider = 'totp' | 'email' | 'backup';
 export type TwoFactorChangeProvider = (provider: TwoFactorProvider) => void;
-export type TwoFactorRetry = (code: string) => void;
+export type TwoFactorRetry = (value: string) => void;
 export interface TwoFactorPayload {
   type: TwoFactorProvider
   login: string
@@ -46,25 +46,30 @@ export class Auth {
   private async processTwoFactor(url: string) {
     const { onTwoFactor } = this.options;
     if (onTwoFactor === undefined) throw new AuthError('Need a TwoFactorHandler for authorize account');
-    let twoFactorPassed = false;
     let currentUrl = url;
-    while (!twoFactorPassed) {
+
+    const requestTwoFactor = async () => {
       const twoFactorResponse = await this.session.client.get(currentUrl);
       const provider: TwoFactorProvider =
           twoFactorResponse.data.includes('введите код подтверждения') ? 'totp' 
             : twoFactorResponse.data.includes('отправлено электронное письмо с одноразовым кодом') ? 'email' 
               : 'backup';
-      const [handlerEvent, eventValue] = await new Promise<['try_code', string] | ['change_provider', TwoFactorProvider]>((respond) => {
-        onTwoFactor({ type: provider, login: this.options.login }, (p) => respond(['change_provider', p]), (c) => respond(['try_code', c]));
+      const [handlerEvent, eventValue] = await new Promise<
+        ['try_code', string] | ['change_provider', TwoFactorProvider]
+      >((respond) => {
+        onTwoFactor({
+          type: provider,
+          login: this.options.login
+        }, (p) => respond(['change_provider', p]), (c) => respond(['try_code', c]));
       });
-
+  
       if (handlerEvent === 'change_provider') {
         const newUrl = new URL(url);
         newUrl.searchParams.set('provider', eventValue);
         currentUrl = newUrl.toString();
-        continue;
+        await requestTwoFactor();
       }
-
+  
       if (handlerEvent === 'try_code') {
         const enterBody = this.session.createRequestBody();
         enterBody.append('code', eventValue);
@@ -73,9 +78,12 @@ export class Auth {
         enterBody.append('provider', provider);
         enterBody.append('remember', '1');
         const twoFactorEnterResponse = await this.session.client.post('/login/two-step', enterBody.toString());
-        twoFactorPassed = twoFactorEnterResponse.data.status === 'ok';
+        const isTwoFactorPassed = twoFactorEnterResponse.data.status === 'ok';
+        if (!isTwoFactorPassed) await requestTwoFactor();
       }
-    }
+    };
+
+    await requestTwoFactor();
   }
   
 }
